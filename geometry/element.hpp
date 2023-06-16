@@ -4,13 +4,15 @@ class Element {
         Node* node1;
         Node* node2;
         Node* node3;
+        Node* node4;
 
     public:
-        Element (short identifier, Node* first_node, Node* second_node, Node* third_node){
+        Element (short identifier, Node* first_node, Node* second_node, Node* third_node, Node* fourth_node){
             ID = identifier;
             node1 = first_node;
             node2 = second_node;
             node3 = third_node;
+            node4 = fourth_node;
         }
 
         void set_ID(short identifier){
@@ -39,5 +41,12 @@ class Element {
         }
         Node* get_node3(){
             return node3;
+        }
+
+        void set_node4(Node* node){
+            node4 = node;
+        }
+        Node* get_node4(){
+            return node4;
         }
 };
