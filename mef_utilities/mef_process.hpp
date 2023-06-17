@@ -16,46 +16,44 @@ float calculate_local_jacobian(float x1, float y1, float z1, float x2, float y2,
            (x4 - x1) * (y3 - y1) * (z2 - z1);
 }
 
-
-//Falta
 void calculate_B(Matrix* B){
-    B->set(-1,0,0);  B->set(1,0,1);  B->set(0,0,2);
-    B->set(-1,1,0);  B->set(0,1,1);  B->set(1,1,2);
+    B->set(-1,0,0);  B->set(1,0,1);  B->set(0,0,2); B->set(0,0,3);
+    B->set(-1,1,0);  B->set(0,1,1);  B->set(1,1,2); B->set(0,1,3);
+    B->set(-1,2,0);  B->set(0,2,1);  B->set(0,2,2); B->set(1,2,3);
 }
 
-//Falta
-void calculate_local_A(Matrix* A, float x1, float y1, float x2, float y2, float x3, float y3){
-    A->set(y3-y1, 0, 0);   A->set(x1-x3, 0, 1);
-    A->set(y1-y2, 1, 0);   A->set(x2-x1, 1, 1);
+void calculate_local_A(Matrix* A, float x1, float y1,float z1, float x2, float y2, float z2, float x3, float y3, float z3, float x4, float y4, float z4){
+    A->set(((y3-y1)*(z4-z1)-(y4-y1)*(z3-z1)), 0, 0);   A->set((-(x3-x1)*(z4-z1)+(x4-x1)*(z3-z1)), 0, 1);   A->set(((x3-x1)*(y4-y1)-(x4-x1)*(y3-y1)), 0, 2);
+    A->set((-(y2-y1)*(z4-z1)+(y4-y1)*(z2-z1)), 1, 0);  A->set(((x2-x1)*(z4-z1)-(x4-x1)*(z2-z1)), 1, 1);  A->set((-(x2-x1)*(y4-y1)+(x4-x1)*(y2-y1)), 1, 2);
+    A->set(((y2-y1)*(z3-z1)-(y3-y1)*(z2-z1)), 2, 0);   A->set((-(x2-x1)*(z3-z1)+(x3-x1)*(z2-z1)), 2, 1);   A->set(((x2-x1)*(y3-y1)-(x3-x1)*(y2-y1)), 2, 2);
 }
 
 void create_local_K(Matrix* K, short element_id, Mesh* M){
-    K->set_size(3,3);//falta
+    K->set_size(4,4);
 
     float k = M->get_problem_data(THERMAL_CONDUCTIVITY);
     float x1 = M->get_element(element_id)->get_node1()->get_x_coordinate(), y1 = M->get_element(element_id)->get_node1()->get_y_coordinate(), z1 = M->get_element(element_id)->get_node1()->get_z_coordinate(),
           x2 = M->get_element(element_id)->get_node2()->get_x_coordinate(), y2 = M->get_element(element_id)->get_node2()->get_y_coordinate(), z2 = M->get_element(element_id)->get_node2()->get_z_coordinate(),
           x3 = M->get_element(element_id)->get_node3()->get_x_coordinate(), y3 = M->get_element(element_id)->get_node3()->get_y_coordinate(), z3 = M->get_element(element_id)->get_node3()->get_z_coordinate(),
           x4 = M->get_element(element_id)->get_node4()->get_x_coordinate(), y4 = M->get_element(element_id)->get_node4()->get_y_coordinate(), z4 = M->get_element(element_id)->get_node4()->get_z_coordinate();
-    float Area = calculate_local_volumen(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4);
+    float Volumen = calculate_local_volumen(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4);
     float J = calculate_local_jacobian(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4);
-
-    //Falta
-    Matrix B(2,3), A(2,2);
+ 
+    Matrix B(3,4), A(3,3);
     calculate_B(&B);
-    calculate_local_A(&A, x1, y1, x2, y2, x3, y3);
+    calculate_local_A(&A, x1, y1,z1, x2, y2,z2, x3, y3,z3, x4, y4, z4);
     //B.show(); A.show();
 
-    Matrix Bt(3,2), At(2,2); //Falta
-    transpose(&B,2,3,&Bt);
-    transpose(&A,2,2,&At);
+    Matrix Bt(4,3), At(3,3);
+    transpose(&B,3,4,&Bt);
+    transpose(&A,3,3,&At);
     //Bt.show(); At.show();
 
     Matrix res1, res2, res3;
     product_matrix_by_matrix(&A,&B,&res1); //Falta
     product_matrix_by_matrix(&At,&res1,&res2);
     product_matrix_by_matrix(&Bt,&res2,&res3);
-    product_scalar_by_matrix(k*Area/(J*J),&res3,3,3,K);
+    product_scalar_by_matrix(k*Volumen/(J*J),&res3,4,4,K); //Hasta Aqui llegamos con Edwin (Min 28:00 clase)
 
     //cout << "\t\tLocal matrix created for Element " << element_id+1 << ": "; K->show(); cout << "\n";
 }
@@ -77,7 +75,7 @@ void create_local_b(Vector* b, short element_id, Mesh* M){
 
     //cout << "\t\tLocal vector created for Element " << element_id+1 << ": "; b->show(); cout << "\n";
 }
-
+//No Cambia
 void create_local_systems(Matrix* Ks, Vector* bs, short num_elements, Mesh* M){
     for(int e = 0; e < num_elements; e++){
         cout << "\tCreating local system for Element " << e+1 << "...\n\n";
