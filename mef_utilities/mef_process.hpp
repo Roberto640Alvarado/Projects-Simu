@@ -59,7 +59,7 @@ void create_local_K(Matrix* K, short element_id, Mesh* M){
 }
 
 void create_local_b(Vector* b, short element_id, Mesh* M){
-    b->set_size(3);
+    b->set_size(4);
 
     float Q = M->get_problem_data(HEAT_SOURCE);
     float x1 = M->get_element(element_id)->get_node1()->get_x_coordinate(), y1 = M->get_element(element_id)->get_node1()->get_y_coordinate(), z1 = M->get_element(element_id)->get_node1()->get_z_coordinate(),
@@ -68,14 +68,14 @@ void create_local_b(Vector* b, short element_id, Mesh* M){
           x4 = M->get_element(element_id)->get_node4()->get_x_coordinate(), y4 = M->get_element(element_id)->get_node4()->get_y_coordinate(), z4 = M->get_element(element_id)->get_node4()->get_z_coordinate();
     float J = calculate_local_jacobian(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4);
 
-    //Falta
-    b->set(Q*J/6,0);
-    b->set(Q*J/6,1);
-    b->set(Q*J/6,2);
+    b->set(Q*J/24,0);
+    b->set(Q*J/24,1);
+    b->set(Q*J/24,2);
+    b->set(Q*J/24,3); 
 
     //cout << "\t\tLocal vector created for Element " << element_id+1 << ": "; b->show(); cout << "\n";
 }
-//No Cambia
+
 void create_local_systems(Matrix* Ks, Vector* bs, short num_elements, Mesh* M){
     for(int e = 0; e < num_elements; e++){
         cout << "\tCreating local system for Element " << e+1 << "...\n\n";
@@ -84,39 +84,38 @@ void create_local_systems(Matrix* Ks, Vector* bs, short num_elements, Mesh* M){
     }
 }
 
-//Falta
-void assembly_K(Matrix* K, Matrix* local_K, short index1, short index2, int index3){
-    K->add(local_K->get(0,0),index1,index1);    K->add(local_K->get(0,1),index1,index2);    K->add(local_K->get(0,2),index1,index3);
-    K->add(local_K->get(1,0),index2,index1);    K->add(local_K->get(1,1),index2,index2);    K->add(local_K->get(1,2),index2,index3);
-    K->add(local_K->get(2,0),index3,index1);    K->add(local_K->get(2,1),index3,index2);    K->add(local_K->get(2,2),index3,index3);
+void assembly_K(Matrix* K, Matrix* local_K, short index1, short index2, int index3, int index4){
+    K->add(local_K->get(0,0),index1,index1);    K->add(local_K->get(0,1),index1,index2);    K->add(local_K->get(0,2),index1,index3);   K->add(local_K->get(0,3),index1,index4);
+    K->add(local_K->get(1,0),index2,index1);    K->add(local_K->get(1,1),index2,index2);    K->add(local_K->get(1,2),index2,index3);   K->add(local_K->get(1,3),index2,index4);
+    K->add(local_K->get(2,0),index3,index1);    K->add(local_K->get(2,1),index3,index2);    K->add(local_K->get(2,2),index3,index3);   K->add(local_K->get(2,3),index3,index4);
+    K->add(local_K->get(3,0),index4,index1);    K->add(local_K->get(3,1),index4,index2);    K->add(local_K->get(3,2),index4,index3);   K->add(local_K->get(3,3),index4,index4);
 }
-//Falta
-void assembly_b(Vector* b, Vector* local_b, short index1, short index2, int index3){
+
+void assembly_b(Vector* b, Vector* local_b, short index1, short index2, int index3, int index4){
     b->add(local_b->get(0),index1);
     b->add(local_b->get(1),index2);
     b->add(local_b->get(2),index3);
+    b->add(local_b->get(3),index4);
 }
 
 void assembly(Matrix* K, Vector* b, Matrix* Ks, Vector* bs, short num_elements, Mesh* M){
     K->init();
     b->init();
     //K->show(); b->show();
-    
- //Falta
+ 
     for(int e = 0; e < num_elements; e++){
         cout << "\tAssembling for Element " << e+1 << "...\n\n";
         short index1 = M->get_element(e)->get_node1()->get_ID() - 1;
         short index2 = M->get_element(e)->get_node2()->get_ID() - 1;
         short index3 = M->get_element(e)->get_node3()->get_ID() - 1;
+        short index4 = M->get_element(e)->get_node4()->get_ID() - 1;
 
-        assembly_K(K, &Ks[e], index1, index2, index3);
-        assembly_b(b, &bs[e], index1, index2, index3);
+        assembly_K(K, &Ks[e], index1, index2, index3, index4);
+        assembly_b(b, &bs[e], index1, index2, index3, index4);
         //cout << "\t\t"; K->show(); cout << "\t\t"; b->show(); cout << "\n";
     }
 }
 
-
-//En adelante no cambia
 void apply_neumann_boundary_conditions(Vector* b, Mesh* M){
     short num_conditions = M->get_quantity(NUM_NEUMANN);
 
