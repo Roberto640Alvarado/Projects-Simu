@@ -18,7 +18,7 @@ void read_input(string filename, Mesh* M){
     for(int i = 0; i < num_nodes; i++){
         short id;
         float x, y, z;
-        dat_file >> id >> x >> y;
+        dat_file >> id >> x >> y >> z;
         M->insert_node(new Node(id,x,y,z), i);
     }
 
