@@ -1,22 +1,22 @@
 class Node {
     private:
-        short ID;
+        int ID;
         float x_coordinate;
         float y_coordinate;
         float z_coordinate;
 
     public:
-        Node(short identifier, float x_value, float y_value, float z_value){
+        Node(int identifier, float x_value, float y_value, float z_value){
             ID = identifier;
             x_coordinate = x_value;
             y_coordinate = y_value;
             z_coordinate = z_value;
         }
 
-        void set_ID(short identifier){
+        void set_ID(int identifier){
             ID = identifier;
         }
-        short get_ID(){
+        int get_ID(){
             return ID;
         }
 

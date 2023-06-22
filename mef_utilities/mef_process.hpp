@@ -28,7 +28,7 @@ void calculate_local_A(Matrix* A, float x1, float y1,float z1, float x2, float y
     A->set(((y2-y1)*(z3-z1)-(y3-y1)*(z2-z1)), 2, 0);   A->set((-(x2-x1)*(z3-z1)+(x3-x1)*(z2-z1)), 2, 1);   A->set(((x2-x1)*(y3-y1)-(x3-x1)*(y2-y1)), 2, 2);
 }
 
-void create_local_K(Matrix* K, short element_id, Mesh* M){
+void create_local_K(Matrix* K, int element_id, Mesh* M){
     K->set_size(4,4);
 
     float k = M->get_problem_data(THERMAL_CONDUCTIVITY);
@@ -58,7 +58,7 @@ void create_local_K(Matrix* K, short element_id, Mesh* M){
     //cout << "\t\tLocal matrix created for Element " << element_id+1 << ": "; K->show(); cout << "\n";
 }
 
-void create_local_b(Vector* b, short element_id, Mesh* M){
+void create_local_b(Vector* b, int element_id, Mesh* M){
     b->set_size(4);
 
     float Q = M->get_problem_data(HEAT_SOURCE);
@@ -76,7 +76,7 @@ void create_local_b(Vector* b, short element_id, Mesh* M){
     //cout << "\t\tLocal vector created for Element " << element_id+1 << ": "; b->show(); cout << "\n";
 }
 
-void create_local_systems(Matrix* Ks, Vector* bs, short num_elements, Mesh* M){
+void create_local_systems(Matrix* Ks, Vector* bs, int num_elements, Mesh* M){
     for(int e = 0; e < num_elements; e++){
         cout << "\tCreating local system for Element " << e+1 << "...\n\n";
         create_local_K(&Ks[e],e,M);
@@ -84,31 +84,31 @@ void create_local_systems(Matrix* Ks, Vector* bs, short num_elements, Mesh* M){
     }
 }
 
-void assembly_K(Matrix* K, Matrix* local_K, short index1, short index2, int index3, int index4){
+void assembly_K(Matrix* K, Matrix* local_K, int index1, int index2, int index3, int index4){
     K->add(local_K->get(0,0),index1,index1);    K->add(local_K->get(0,1),index1,index2);    K->add(local_K->get(0,2),index1,index3);   K->add(local_K->get(0,3),index1,index4);
     K->add(local_K->get(1,0),index2,index1);    K->add(local_K->get(1,1),index2,index2);    K->add(local_K->get(1,2),index2,index3);   K->add(local_K->get(1,3),index2,index4);
     K->add(local_K->get(2,0),index3,index1);    K->add(local_K->get(2,1),index3,index2);    K->add(local_K->get(2,2),index3,index3);   K->add(local_K->get(2,3),index3,index4);
     K->add(local_K->get(3,0),index4,index1);    K->add(local_K->get(3,1),index4,index2);    K->add(local_K->get(3,2),index4,index3);   K->add(local_K->get(3,3),index4,index4);
 }
 
-void assembly_b(Vector* b, Vector* local_b, short index1, short index2, int index3, int index4){
+void assembly_b(Vector* b, Vector* local_b, int index1, int index2, int index3, int index4){
     b->add(local_b->get(0),index1);
     b->add(local_b->get(1),index2);
     b->add(local_b->get(2),index3);
     b->add(local_b->get(3),index4);
 }
 
-void assembly(Matrix* K, Vector* b, Matrix* Ks, Vector* bs, short num_elements, Mesh* M){
+void assembly(Matrix* K, Vector* b, Matrix* Ks, Vector* bs, int num_elements, Mesh* M){
     K->init();
     b->init();
     //K->show(); b->show();
  
     for(int e = 0; e < num_elements; e++){
         cout << "\tAssembling for Element " << e+1 << "...\n\n";
-        short index1 = M->get_element(e)->get_node1()->get_ID() - 1;
-        short index2 = M->get_element(e)->get_node2()->get_ID() - 1;
-        short index3 = M->get_element(e)->get_node3()->get_ID() - 1;
-        short index4 = M->get_element(e)->get_node4()->get_ID() - 1;
+        int index1 = M->get_element(e)->get_node1()->get_ID() - 1;
+        int index2 = M->get_element(e)->get_node2()->get_ID() - 1;
+        int index3 = M->get_element(e)->get_node3()->get_ID() - 1;
+        int index4 = M->get_element(e)->get_node4()->get_ID() - 1;
 
         assembly_K(K, &Ks[e], index1, index2, index3, index4);
         assembly_b(b, &bs[e], index1, index2, index3, index4);
@@ -117,12 +117,12 @@ void assembly(Matrix* K, Vector* b, Matrix* Ks, Vector* bs, short num_elements, 
 }
 
 void apply_neumann_boundary_conditions(Vector* b, Mesh* M){
-    short num_conditions = M->get_quantity(NUM_NEUMANN);
+    int num_conditions = M->get_quantity(NUM_NEUMANN);
 
     for(int c = 0; c < num_conditions; c++){
         Condition* cond = M->get_neumann_condition(c);
         
-        short index = cond->get_node()->get_ID() - 1;
+        int index = cond->get_node()->get_ID() - 1;
         b->add(cond->get_value(), index);
     }
     //cout << "\t\t"; b->show(); cout << "\n";
@@ -134,13 +134,13 @@ void add_column_to_RHS(Matrix* K, Vector* b, int col, float T_bar){
 }
 
 void apply_dirichlet_boundary_conditions(Matrix* K, Vector* b, Mesh* M){
-    short num_conditions = M->get_quantity(NUM_DIRICHLET);
+    int num_conditions = M->get_quantity(NUM_DIRICHLET);
     int previous_removed = 0;
 
     for(int c = 0; c < num_conditions; c++){
         Condition* cond = M->get_dirichlet_condition(c);
         
-        short index = cond->get_node()->get_ID() - 1 - previous_removed;
+        int index = cond->get_node()->get_ID() - 1 - previous_removed;
         float cond_value = cond->get_value();
 
         //K->show();
